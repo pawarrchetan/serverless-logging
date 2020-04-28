@@ -1,0 +1,68 @@
+service: ${env:SUBSCRIBER_FUNCTION_NAME}
+
+provider:
+  name: aws
+  region: eu-central-1
+  AWS_ACCOUNT: ${env:AWS_ACCOUNT}
+  runtime: python3.6
+  iamManagedPolicies:
+  - arn:aws:iam::aws:policy/AWSLambdaExecute
+  - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+  iamRoleStatements:
+  - Effect: 'Allow'
+    Action:
+    - kms:Encrypt
+    - kms:Decrypt
+    - kms:ReEncrypt*
+    - kms:GenerateDataKey*
+    - kms:CreateGrant
+    - kms:DescribeKey
+    - lambda:AddPermission
+    - lambda:GetFunction
+    Resource: "*"
+
+package:
+  exclude:
+  - package/**
+
+functions:
+  log-subscriber:
+    name: ${env:SUBSCRIBER_FUNCTION_NAME}
+    description: Function used to subscribe to newly created CloudWatch log groups with PREFIX lambda
+    handler: handler.lambda_handler
+    events:
+      - cloudwatchEvent:
+        event:
+          source:
+            - aws.logs
+          detail-type:
+            - 'AWS API Call via CloudTrail'
+          detail:
+            eventSource:
+              - logs.amazonaws.com
+            eventName:
+              - CreateLogGroup
+    environment:
+      TARGET_FUNCTION: ${env:TARGET_FUNCTION}
+      PREFIX: ${env:PREFIX}
+
+resources:
+  Resources:
+    EventRule: 
+      Type: AWS::Events::Rule
+      Properties: 
+        Description: "EventRule"
+        EventPattern:
+          source:
+            - "aws.logs"
+          detail-type: 
+            - "AWS API Call via CloudTrail"
+          detail:
+            eventSource:
+              - logs.amazonaws.com
+            eventName:
+              - CreateLogGroup
+        Targets: 
+          - Arn: 
+              "arn:aws:lambda:${self:provider.region}:${self:provider.AWS_ACCOUNT}:function:${self:service}"
+            Id: cloudwatchRuleInvokeLambda

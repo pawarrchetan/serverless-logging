@@ -1,0 +1,33 @@
+path.home: /home/functionbeat
+
+functionbeat.provider.aws.endpoint: "s3.amazonaws.com"
+functionbeat.provider.aws.deploy_bucket: "${AWS_ACCOUNT}-functionbeat-bucket"
+
+functionbeat.provider.aws.functions:
+  - name: ${SHIPPER_FUNCTION_NAME}
+    enabled: true
+    type: cloudwatch_logs
+    description: "lambda function for shipping logs to elastic cloud."
+    fields:
+      env: ${STAGE}-consumer-logs
+    triggers:
+      - log_group_name: /aws/lambda/sample    # This log group is only added for initialization
+#============================= Elastic Cloud ==================================
+cloud.id: "epilot-cloud:%%ELASTIC_CLOUD_ID%%"
+cloud.auth: "elastic:%%ELASTIC_PASSWORD%%"
+#================================ Outputs =====================================
+output.elasticsearch:
+  hosts: ['${HOST}']
+  username: elastic
+  password: %%ELASTIC_PASSWORD%%
+  index: "%{[fields.env]}-%{+yyyy-MM-dd}"
+
+setup.template.enabled: false
+setup.template.overwrite: true
+setup.template.name: "consumer-logs-"
+setup.template.pattern: "consumer-logs-*"
+setup.template.fields: "fields.yml"
+setup.template.settings:
+  index.number_of_shards: 1
+  index.number_of_replicas: 1
+setup.ilm.enabled: false
