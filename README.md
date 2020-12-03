@@ -11,12 +11,11 @@ Whenever the `log-shipper` lambda is invoked :
 
 Whenever there is any serverless component deployed in the AWS accounts, the `log-subscriber` function will detect the `CreateLogGroup` event from CloudWatch logs and create a subscription filter for the CloudWatch log group to allow the `log-shipper` function to ship the logs to the Elasticsearch.
 
-HLD: https://e-pilot.atlassian.net/wiki/spaces/RT/pages/1551695977/API+-+Results+API+architecture
 
 # Instructions
 The `functionbeat.yml` file mentions the log group `/aws/lambda/sample` for subscription to the `log-shipper` function. This log group is only added for initialization of the `log-shipper` function.
 
-* functionbeat binary does not automatically handle updates to the function if the configuration changes. To mitigate this, we have a boolean variable in `gitlab-ci.yml` called "DEPLOY" which takes care of the DEPLOY or UPDATE. 
+* functionbeat binary does not automatically handle updates to the function if the configuration changes. To mitigate this, we have a boolean variable in CI / CD pipeline job which takes care of the DEPLOY or UPDATE. 
 
 A value of DEPLOY = "TRUE" will deploy the function as a new cloudformation stack at first deployment.
 A value of DEPLOY = "FALSE" will update the existing cloudformation stack if there are any changes to the file `functionbeat.yml`
